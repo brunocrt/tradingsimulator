@@ -44,9 +44,23 @@ export type Trade = {
   net_pnl: number;
   fees: number;
   slippage: number;
+  risk_amount: number;
+  reward_amount: number;
   risk_reward_planned: number;
   risk_reward_realized: number;
   exit_reason: string;
+};
+
+export type Candle = {
+  symbol: string;
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  timeframe: string;
+  vwap?: number | null;
 };
 
 export type BacktestResult = {
@@ -55,6 +69,7 @@ export type BacktestResult = {
   signals: Signal[];
   rejected: { symbol: string; reasons: string[] }[];
   trades: Trade[];
+  candles: Candle[];
   dataSource?: {
     provider: string;
     source: string;

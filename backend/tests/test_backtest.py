@@ -28,7 +28,9 @@ def test_backtest_returns_cost_aware_trade_journal() -> None:
     assert "portfolio" in result
     assert "performance" in result
     assert "signals" in result
+    assert "candles" in result
     assert "trades" in result
+    assert result["candles"]
     for trade in result["trades"]:
         assert trade["fees"] >= 0
         assert trade["slippage"] >= 0

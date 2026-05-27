@@ -64,6 +64,8 @@ export const sampleResult: BacktestResult = {
       net_pnl: 15.17,
       fees: 0.0223,
       slippage: 0.0504,
+      risk_amount: 9.5,
+      reward_amount: 16.15,
       risk_reward_planned: 1.7,
       risk_reward_realized: 1.6,
       exit_reason: "TAKE_PROFIT"
@@ -80,11 +82,27 @@ export const sampleResult: BacktestResult = {
       net_pnl: 15.16,
       fees: 0.0224,
       slippage: 0.0506,
+      risk_amount: 9.5,
+      reward_amount: 16.15,
       risk_reward_planned: 1.7,
       risk_reward_realized: 1.6,
       exit_reason: "TAKE_PROFIT"
     }
   ],
+  candles: Array.from({ length: 80 }, (_, index) => {
+    const base = 124 + index * 0.06 + Math.sin(index / 5) * 0.35;
+    return {
+      symbol: "AMD",
+      timestamp: new Date(Date.UTC(2026, 4, 26, 13, 30 + index)).toISOString(),
+      open: Number((base - 0.08).toFixed(2)),
+      high: Number((base + 0.28).toFixed(2)),
+      low: Number((base - 0.24).toFixed(2)),
+      close: Number((base + 0.08).toFixed(2)),
+      volume: 180000 + index * 1200,
+      timeframe: "1m",
+      vwap: null
+    };
+  }),
   dataSource: {
     provider: "sample",
     source: "generated sample candles",

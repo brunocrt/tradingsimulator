@@ -2,9 +2,11 @@ import type { Trade } from "../lib/types";
 
 type Props = {
   trades: Trade[];
+  selectedTrade: Trade | null;
+  onSelectTrade: (trade: Trade) => void;
 };
 
-export function TradeJournal({ trades }: Props) {
+export function TradeJournal({ trades, selectedTrade, onSelectTrade }: Props) {
   return (
     <section className="panel">
       <div className="panel-heading">
@@ -27,7 +29,11 @@ export function TradeJournal({ trades }: Props) {
           </thead>
           <tbody>
             {trades.map((trade, index) => (
-              <tr key={`${trade.symbol}-${trade.exit_time}-${index}`}>
+              <tr
+                className={selectedTrade === trade ? "selected-row" : ""}
+                key={`${trade.symbol}-${trade.exit_time}-${index}`}
+                onClick={() => onSelectTrade(trade)}
+              >
                 <td>{trade.symbol}</td>
                 <td>{trade.strategy.replaceAll("_", " ")}</td>
                 <td>{trade.shares}</td>
@@ -46,4 +52,3 @@ export function TradeJournal({ trades }: Props) {
     </section>
   );
 }
-

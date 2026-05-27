@@ -8,6 +8,20 @@ from app.services.orchestrator import scan_symbol
 from app.services.risk import validate_signal
 
 
+def _serialize_candle(candle: Candle) -> dict:
+    return {
+        "symbol": candle.symbol,
+        "timestamp": candle.timestamp,
+        "open": candle.open,
+        "high": candle.high,
+        "low": candle.low,
+        "close": candle.close,
+        "volume": candle.volume,
+        "timeframe": candle.timeframe,
+        "vwap": candle.vwap,
+    }
+
+
 def run_single_symbol_backtest(
     candles: Sequence[Candle],
     average_volume: int,
@@ -123,5 +137,5 @@ def run_single_symbol_backtest(
         "signals": [signal.to_dict() for signal in signals[-25:]],
         "rejected": rejected[-25:],
         "trades": [trade.__dict__ for trade in portfolio.trades],
+        "candles": [_serialize_candle(candle) for candle in candles],
     }
-

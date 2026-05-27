@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MetricTile } from "./components/MetricTile";
 import { ScannerTable } from "./components/ScannerTable";
+import { TradeChart } from "./components/TradeChart";
 import { TradeJournal } from "./components/TradeJournal";
 import { runBacktest } from "./lib/api";
 import { sampleResult } from "./lib/sampleResult";
@@ -45,6 +46,7 @@ export default function App() {
   const [endDate, setEndDate] = useState(DEFAULT_BACKTEST_REQUEST.end);
   const [runRequest, setRunRequest] = useState<BacktestRequest>(DEFAULT_BACKTEST_REQUEST);
   const [result, setResult] = useState<BacktestResult | null>(null);
+  const [selectedTradeIndex, setSelectedTradeIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -52,9 +54,13 @@ export default function App() {
     setLoading(true);
     setError(null);
     runBacktest(runRequest)
-      .then(setResult)
+      .then((nextResult) => {
+        setResult(nextResult);
+        setSelectedTradeIndex(0);
+      })
       .catch((err: unknown) => {
         setResult(sampleResult);
+        setSelectedTradeIndex(0);
         console.info("Using bundled sample backtest because the API is unavailable.", err);
       })
       .finally(() => setLoading(false));
@@ -76,6 +82,8 @@ export default function App() {
     if (!result) return "neutral";
     return result.portfolio.realizedPnl >= 0 ? "good" : "bad";
   }, [result]);
+
+  const selectedTrade = result?.trades[selectedTradeIndex] ?? null;
 
   return (
     <main className="app-shell">
@@ -187,10 +195,19 @@ export default function App() {
       </section>
 
       {result ? (
-        <div className="workspace-grid">
-          <ScannerTable signals={result.signals} />
-          <TradeJournal trades={result.trades} />
-        </div>
+        <>
+          <div className="chart-grid">
+            <TradeChart candles={result.candles} selectedTrade={selectedTrade} trades={result.trades} />
+          </div>
+          <div className="workspace-grid">
+            <ScannerTable signals={result.signals} />
+            <TradeJournal
+              trades={result.trades}
+              selectedTrade={selectedTrade}
+              onSelectTrade={(trade) => setSelectedTradeIndex(result.trades.indexOf(trade))}
+            />
+          </div>
+        </>
       ) : (
         <section className="panel loading-panel">Loading simulation...</section>
       )}

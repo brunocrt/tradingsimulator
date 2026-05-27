@@ -151,6 +151,7 @@ select {
 }
 
 .metrics-grid,
+.chart-grid,
 .workspace-grid {
   display: grid;
   gap: 12px;
@@ -163,8 +164,21 @@ select {
   margin-bottom: 12px;
 }
 
+.chart-grid {
+  margin-bottom: 12px;
+}
+
 .workspace-grid {
   grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.8fr);
+}
+
+.chart-panel {
+  min-height: 486px;
+}
+
+.chart-surface {
+  height: 420px;
+  width: 100%;
 }
 
 .metric,
@@ -242,6 +256,15 @@ td {
   text-align: left;
   vertical-align: top;
   white-space: nowrap;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover,
+.selected-row {
+  background: #f4f8f5;
 }
 
 th {
