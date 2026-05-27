@@ -4,7 +4,7 @@ import { ScannerTable } from "./components/ScannerTable";
 import { TradeJournal } from "./components/TradeJournal";
 import { runBacktest } from "./lib/api";
 import { sampleResult } from "./lib/sampleResult";
-import type { BacktestResult } from "./lib/types";
+import type { BacktestRequest, BacktestResult } from "./lib/types";
 import "./styles.css";
 
 const SYMBOLS = ["AMD", "NVDA", "AAPL", "MSFT", "TSLA", "SPY"];
@@ -22,18 +22,28 @@ const TIMEFRAMES = [
   { label: "1 min", value: "1m" }
 ];
 
+const DEFAULT_BACKTEST_REQUEST: BacktestRequest = {
+  symbol: "AMD",
+  initialCapital: DEFAULT_INITIAL_CAPITAL,
+  provider: "yahoo",
+  start: "2024-01-01",
+  end: "2024-06-30",
+  timeframe: "1d"
+};
+
 function dollars(value: number) {
   return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
 export default function App() {
-  const [symbol, setSymbol] = useState("AMD");
-  const [initialCapital, setInitialCapital] = useState(DEFAULT_INITIAL_CAPITAL);
-  const [provider, setProvider] = useState("yahoo");
+  const [symbol, setSymbol] = useState(DEFAULT_BACKTEST_REQUEST.symbol);
+  const [initialCapital, setInitialCapital] = useState(DEFAULT_BACKTEST_REQUEST.initialCapital);
+  const [provider, setProvider] = useState(DEFAULT_BACKTEST_REQUEST.provider);
   const [apiKey, setApiKey] = useState("");
-  const [timeframe, setTimeframe] = useState("1d");
-  const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState("2024-06-30");
+  const [timeframe, setTimeframe] = useState(DEFAULT_BACKTEST_REQUEST.timeframe);
+  const [startDate, setStartDate] = useState(DEFAULT_BACKTEST_REQUEST.start);
+  const [endDate, setEndDate] = useState(DEFAULT_BACKTEST_REQUEST.end);
+  const [runRequest, setRunRequest] = useState<BacktestRequest>(DEFAULT_BACKTEST_REQUEST);
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +51,17 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    runBacktest({
+    runBacktest(runRequest)
+      .then(setResult)
+      .catch((err: unknown) => {
+        setResult(sampleResult);
+        console.info("Using bundled sample backtest because the API is unavailable.", err);
+      })
+      .finally(() => setLoading(false));
+  }, [runRequest]);
+
+  function submitBacktest() {
+    setRunRequest({
       symbol,
       initialCapital,
       provider,
@@ -49,14 +69,8 @@ export default function App() {
       end: endDate,
       timeframe,
       apiKey: provider === "polygon" ? apiKey : undefined
-    })
-      .then(setResult)
-      .catch((err: unknown) => {
-        setResult(sampleResult);
-        console.info("Using bundled sample backtest because the API is unavailable.", err);
-      })
-      .finally(() => setLoading(false));
-  }, [symbol, initialCapital, provider, startDate, endDate, timeframe, apiKey]);
+    });
+  }
 
   const tone = useMemo(() => {
     if (!result) return "neutral";
@@ -138,6 +152,9 @@ export default function App() {
               />
             </div>
           ) : null}
+          <button className="run-button" disabled={loading} type="button" onClick={submitBacktest}>
+            {loading ? "Running" : "Run Backtest"}
+          </button>
         </div>
       </header>
 
@@ -146,7 +163,7 @@ export default function App() {
         <section className={result.dataSource.warning ? "data-source data-source-warning" : "data-source"}>
           <strong>{result.dataSource.source}</strong>
           <span>
-            {result.dataSource.symbol} · {result.dataSource.timeframe} · {result.dataSource.candles} candles ·{" "}
+            {result.dataSource.symbol} | {result.dataSource.timeframe} | {result.dataSource.candles} candles |{" "}
             {result.dataSource.start} to {result.dataSource.end}
           </span>
           {result.dataSource.warning ? <em>{result.dataSource.warning}</em> : null}

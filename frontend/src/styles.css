@@ -17,6 +17,7 @@ body {
 }
 
 button,
+input,
 select {
   font: inherit;
 }
@@ -104,6 +105,22 @@ select {
 
 .api-key-field {
   min-width: 220px;
+}
+
+.run-button {
+  background: #18211f;
+  border: 1px solid #18211f;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.run-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .data-source {
