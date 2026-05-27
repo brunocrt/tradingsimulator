@@ -1,0 +1,67 @@
+system:
+  mode: paper
+  timezone: America/New_York
+  market: US_EQUITIES
+  live_trading_enabled: false
+
+capital:
+  initial_capital: 10000
+  allow_fractional_shares: false
+  max_capital_deployed_pct: 75
+  max_single_position_pct: 25
+
+risk:
+  risk_per_trade_pct: 1.0
+  max_daily_loss_pct: 2.0
+  max_weekly_loss_pct: 5.0
+  max_total_drawdown_pct: 10.0
+  max_open_positions: 3
+  max_trades_per_day: 5
+  max_consecutive_losses: 3
+  cooldown_after_loss_minutes: 30
+
+liquidity:
+  min_average_daily_volume: 1000000
+  min_average_dollar_volume: 20000000
+  max_spread_pct: 0.05
+  max_estimated_slippage_pct: 0.10
+
+strategies:
+  enabled:
+    - VWAP_PULLBACK
+    - OPENING_RANGE_BREAKOUT
+    - TREND_CONTINUATION
+  minimum_signal_score: 75
+  minimum_risk_reward_ratio: 1.5
+
+anti_crowding:
+  enabled: true
+  max_crowding_score: 70
+  max_trap_risk_score: 60
+  max_distance_from_vwap_atr: 2.0
+  max_distance_from_ema20_atr: 1.5
+  require_retest_for_obvious_breakouts: true
+  avoid_entries_after_fading_volume_spike: true
+  avoid_round_number_stop_clusters: true
+  wait_for_vwap_reclaim_confirmation: true
+
+execution:
+  order_type: limit
+  use_bracket_orders: true
+  default_take_profit_r_multiple: 2.0
+  default_stop_loss_atr_multiple: 1.2
+  force_close_before_market_close: true
+  force_close_time: "15:55"
+
+costs:
+  commission_per_trade: 0.00
+  sec_fee_pct_on_sell: 0.000008
+  finra_fee_per_share_on_sell: 0.000166
+  include_spread_cost: true
+  include_slippage: true
+
+schedule:
+  scan_interval_seconds: 60
+  avoid_first_minutes_after_open: 5
+  avoid_new_trades_after: "15:30"
+

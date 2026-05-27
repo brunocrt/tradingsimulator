@@ -1,0 +1,15 @@
+[project]
+name = "trading-simulator-backend"
+version = "0.1.0"
+description = "Risk-first autonomous multi-agent stock trading simulation backend."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.111",
+  "uvicorn[standard]>=0.30",
+  "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
