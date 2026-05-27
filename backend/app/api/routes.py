@@ -1,9 +1,11 @@
 from dataclasses import replace
+from datetime import date
 
 from fastapi import APIRouter, Query
 
 from app.core.config import SimulatorConfig
 from app.services.backtest import run_single_symbol_backtest
+from app.services.market_data import MarketDataProviderName, MarketDataRequest, fetch_market_data
 from app.services.orchestrator import scan_symbol
 from app.services.sample_data import generate_intraday_candles, sample_average_volume
 
@@ -68,15 +70,41 @@ def scan(symbol: str = "AMD") -> dict:
 def backtest(
     symbol: str = "AMD",
     initial_capital: float = Query(default=1000.0, alias="initialCapital", ge=100.0, le=10_000_000.0),
+    provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
+    start: date = Query(default=date(2024, 1, 1)),
+    end: date = Query(default=date(2024, 6, 30)),
+    timeframe: str = Query(default="1d", pattern="^(1m|5m|15m|1h|1d)$"),
+    api_key: str | None = Query(default=None, alias="apiKey"),
 ) -> dict:
     config = replace(CONFIG, initial_capital=initial_capital)
-    return run_single_symbol_backtest(
-        generate_intraday_candles(symbol.upper()),
+    market_data = fetch_market_data(
+        MarketDataRequest(
+            symbol=symbol.upper(),
+            provider=provider,
+            start=start,
+            end=end,
+            timeframe=timeframe,
+            api_key=api_key,
+        )
+    )
+    result = run_single_symbol_backtest(
+        market_data.candles,
         average_volume=sample_average_volume(),
         spread_pct=0.02,
         estimated_slippage_pct=0.03,
         config=config,
     )
+    result["dataSource"] = {
+        "provider": market_data.provider,
+        "source": market_data.source,
+        "symbol": symbol.upper(),
+        "timeframe": timeframe,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "candles": len(market_data.candles),
+        "warning": market_data.warning,
+    }
+    return result
 
 
 @router.get("/simulation/status")

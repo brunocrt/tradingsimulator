@@ -84,6 +84,15 @@ export const sampleResult: BacktestResult = {
       risk_reward_realized: 1.6,
       exit_reason: "TAKE_PROFIT"
     }
-  ]
+  ],
+  dataSource: {
+    provider: "sample",
+    source: "generated sample candles",
+    symbol: "AMD",
+    timeframe: "1m",
+    start: "2026-05-26",
+    end: "2026-05-26",
+    candles: 180,
+    warning: null
+  }
 };
-

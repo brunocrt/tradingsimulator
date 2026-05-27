@@ -14,7 +14,8 @@ Risk-first stock trading simulation workspace for research, backtesting, and fut
 - Risk-based position sizing from account equity.
 - Cost-aware simulated fills using spread, slippage, commissions, SEC fee, and FINRA fee assumptions.
 - React dashboard for portfolio metrics, scanner decisions, and trade journal.
-- Sample intraday candles so the app runs without market-data provider credentials.
+- Yahoo Finance historical candles by default, with sample fallback.
+- Polygon historical aggregates as an API-key configurable provider.
 
 ## Backend
 
@@ -55,6 +56,16 @@ Then open:
 - API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 The frontend container is built with `VITE_API_BASE=http://127.0.0.1:8000`, so the browser talks to the API through the published backend port.
+
+## Market Data
+
+The dashboard supports:
+
+- `Yahoo Finance`: default free historical data provider.
+- `Polygon`: configurable provider that requires an API key in the UI.
+- `Sample`: generated candles for offline development and demos.
+
+The backtest request accepts `symbol`, `initialCapital`, `provider`, `start`, `end`, `timeframe`, and optional `apiKey`.
 
 ## Tests
 

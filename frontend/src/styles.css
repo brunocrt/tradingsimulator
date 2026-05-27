@@ -27,7 +27,7 @@ select {
 }
 
 .topbar {
-  align-items: center;
+  align-items: start;
   display: flex;
   gap: 20px;
   justify-content: space-between;
@@ -47,9 +47,12 @@ select {
 }
 
 .controls {
-  align-items: center;
+  align-items: end;
   display: flex;
   gap: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 940px;
 }
 
 .field {
@@ -63,6 +66,7 @@ select {
 }
 
 .controls select,
+.controls input,
 .money-input {
   background: #ffffff;
   border: 1px solid #cbd5ce;
@@ -72,6 +76,10 @@ select {
 
 .controls select {
   padding: 0 36px 0 12px;
+}
+
+.controls input {
+  padding: 0 10px;
 }
 
 .money-input {
@@ -92,6 +100,37 @@ select {
   outline: 0;
   padding: 0 0 0 6px;
   width: 100%;
+}
+
+.api-key-field {
+  min-width: 220px;
+}
+
+.data-source {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe2dd;
+  border-radius: 8px;
+  color: #4f5e56;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 auto 12px;
+  max-width: 1440px;
+  padding: 12px 16px;
+}
+
+.data-source strong {
+  color: #18211f;
+}
+
+.data-source em {
+  color: #9a5b00;
+  font-style: normal;
+}
+
+.data-source-warning {
+  border-color: #edc777;
 }
 
 .metrics-grid,
@@ -255,6 +294,8 @@ th:last-child {
     align-items: stretch;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    justify-content: stretch;
+    max-width: none;
   }
 
   .metrics-grid {

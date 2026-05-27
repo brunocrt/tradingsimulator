@@ -55,5 +55,24 @@ export type BacktestResult = {
   signals: Signal[];
   rejected: { symbol: string; reasons: string[] }[];
   trades: Trade[];
+  dataSource?: {
+    provider: string;
+    source: string;
+    symbol: string;
+    timeframe: string;
+    start: string;
+    end: string;
+    candles: number;
+    warning: string | null;
+  };
 };
 
+export type BacktestRequest = {
+  symbol: string;
+  initialCapital: number;
+  provider: string;
+  start: string;
+  end: string;
+  timeframe: string;
+  apiKey?: string;
+};
