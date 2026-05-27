@@ -6,7 +6,7 @@ Risk-first stock trading simulation workspace for research, backtesting, and fut
 
 - Deterministic Python simulation core.
 - FastAPI endpoints for config, watchlist, market status, signals, backtest results, portfolio, and trade journal.
-- Ranked opportunity scanner across the configured watchlist.
+- Ranked opportunity scanner across a broader liquid US discovery universe.
 - Rule-based MVP strategies:
   - VWAP pullback
   - Opening range breakout
@@ -66,7 +66,9 @@ The dashboard supports:
 - `Polygon`: configurable provider that requires an API key in the UI.
 - `Sample`: generated candles for offline development and demos.
 
-Backtest, candle, signal, and opportunity scan requests accept `provider`, `start`, `end`, `timeframe`, and optional `apiKey`. Backtests also accept `symbol` and `initialCapital`; opportunity scans can optionally accept comma-separated `symbols`.
+Backtest, candle, signal, and opportunity scan requests accept `provider`, `start`, `end`, `timeframe`, and optional `apiKey`. Backtests also accept `symbol` and `initialCapital`; opportunity scans can optionally accept comma-separated `symbols`, otherwise they use the configured liquid US discovery universe and return the top 25 ranked candidates by default.
+
+The scanner is not yet an exchange-wide NYSE/Nasdaq screener. Scanning every listed ticker will require a ticker master import, persisted candle cache, rate-limit aware refresh jobs, and survivorship-bias controls.
 
 ## Tests
 
@@ -77,9 +79,10 @@ cd backend
 
 ## Next Build Steps
 
-1. Add multi-symbol portfolio backtesting that allocates capital from ranked opportunities.
-2. Add adaptive exits with trailing stops, partial profits, and momentum continuation checks.
-3. Persist candles, signals, orders, positions, and journal entries in PostgreSQL.
-4. Add WebSocket updates for paper-trading mode.
-5. Expand backtest metrics with drawdown, Sharpe, Sortino, expectancy, and slippage impact.
-6. Add structured agent reasoning logs while keeping trade approval deterministic.
+1. Add a persisted ticker master and candle cache for exchange-wide NYSE/Nasdaq screening.
+2. Add multi-symbol portfolio backtesting that allocates capital from ranked opportunities.
+3. Add adaptive exits with trailing stops, partial profits, and momentum continuation checks.
+4. Persist candles, signals, orders, positions, and journal entries in PostgreSQL.
+5. Add WebSocket updates for paper-trading mode.
+6. Expand backtest metrics with drawdown, Sharpe, Sortino, expectancy, and slippage impact.
+7. Add structured agent reasoning logs while keeping trade approval deterministic.

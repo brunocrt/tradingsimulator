@@ -25,7 +25,7 @@ FastAPI exposes the initial REST contract from the specification:
 
 Market data flows through a provider interface with implementations for generated sample candles, Yahoo Finance historical candles, and Polygon aggregates. Backtests, candle reads, and signal scans all use the same provider request path so API behavior stays consistent across research views.
 
-The opportunity scanner runs the configured watchlist through the same deterministic signal engine, adds momentum and liquidity scoring, and returns a ranked shortlist. This separates opportunity discovery from the single-symbol backtest flow and prepares the simulator for portfolio-level allocation.
+The opportunity scanner runs the configured liquid US discovery universe through the same deterministic signal engine, adds momentum and liquidity scoring, and returns a ranked shortlist. This separates opportunity discovery from the single-symbol backtest flow and prepares the simulator for portfolio-level allocation. Exchange-wide NYSE/Nasdaq screening is intentionally left for the persistence layer so ticker metadata, candles, rate limits, and survivorship-bias controls can be handled explicitly.
 
 ## Dashboard
 

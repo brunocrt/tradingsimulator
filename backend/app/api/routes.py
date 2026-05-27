@@ -88,12 +88,16 @@ def get_config() -> dict:
         "maxTradesPerDay": CONFIG.max_trades_per_day,
         "allowedStrategies": list(CONFIG.enabled_strategies),
         "watchlist": CONFIG.watchlist,
+        "discoveryUniverseSize": len(CONFIG.discovery_universe),
     }
 
 
 @router.get("/watchlists")
 def get_watchlists() -> list[dict]:
-    return [{"id": "default-liquid-us", "name": "Liquid US MVP", "symbols": CONFIG.watchlist}]
+    return [
+        {"id": "default-liquid-us", "name": "Liquid US MVP", "symbols": CONFIG.watchlist},
+        {"id": "discovery-liquid-us", "name": "Liquid US Discovery", "symbols": CONFIG.discovery_universe},
+    ]
 
 
 @router.get("/market/status")
@@ -161,15 +165,18 @@ def scan(
 
 @router.get("/opportunities/scan")
 def opportunities_scan(
-    symbols: str | None = Query(default=None, description="Comma-separated symbols. Defaults to configured watchlist."),
+    symbols: str | None = Query(
+        default=None,
+        description="Comma-separated symbols. Defaults to the configured liquid US discovery universe.",
+    ),
     provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
     start: date = Query(default=DEFAULT_START),
     end: date = Query(default=DEFAULT_END),
     timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = Query(default=25, ge=1, le=250),
     api_key: str | None = Query(default=None, alias="apiKey"),
 ) -> dict:
-    universe = _parse_symbols(symbols) if symbols else CONFIG.watchlist
+    universe = _parse_symbols(symbols) if symbols else CONFIG.discovery_universe
     opportunities = scan_opportunities(
         symbols=universe,
         provider=provider,

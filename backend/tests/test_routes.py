@@ -50,3 +50,18 @@ def test_opportunities_scan_route_returns_ranked_candidates() -> None:
     assert payload["universeSize"] == 3
     assert len(payload["opportunities"]) == 2
     assert payload["opportunities"][0]["rank"] == 1
+
+
+def test_opportunities_scan_defaults_to_discovery_universe() -> None:
+    payload = opportunities_scan(
+        symbols=None,
+        provider=MarketDataProviderName.SAMPLE,
+        start=DEFAULT_START,
+        end=DEFAULT_END,
+        timeframe="1d",
+        limit=25,
+        api_key=None,
+    )
+
+    assert payload["universeSize"] > 50
+    assert len(payload["opportunities"]) == 25

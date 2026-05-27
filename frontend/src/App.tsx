@@ -76,7 +76,7 @@ export default function App() {
       start: runRequest.start,
       end: runRequest.end,
       timeframe: runRequest.timeframe,
-      limit: 10,
+      limit: 25,
       apiKey: runRequest.apiKey
     })
       .then(setOpportunityResult)
