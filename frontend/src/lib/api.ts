@@ -23,11 +23,14 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
 
 export async function scanOpportunities(request: OpportunityScanRequest): Promise<OpportunityScanResult> {
   const params = new URLSearchParams({
+    universe: request.universe ?? "exchange",
     provider: request.provider,
     start: request.start,
     end: request.end,
     timeframe: request.timeframe,
-    limit: String(request.limit ?? 10)
+    limit: String(request.limit ?? 25),
+    maxSymbols: String(request.maxSymbols ?? 250),
+    includeEtfs: request.includeEtfs ? "true" : "false"
   });
   if (request.symbols) {
     params.set("symbols", request.symbols);

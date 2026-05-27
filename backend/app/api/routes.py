@@ -8,6 +8,7 @@ from app.services.backtest import run_single_symbol_backtest
 from app.services.market_data import MarketDataProviderName, MarketDataRequest, average_volume, fetch_market_data
 from app.services.opportunities import scan_opportunities
 from app.services.orchestrator import scan_symbol
+from app.services.ticker_master import exchange_universe_symbols, refresh_ticker_master, ticker_master_status
 
 router = APIRouter(prefix="/api")
 
@@ -100,6 +101,18 @@ def get_watchlists() -> list[dict]:
     ]
 
 
+@router.get("/universe/status")
+def universe_status() -> dict:
+    return ticker_master_status()
+
+
+@router.post("/universe/refresh")
+def universe_refresh() -> dict:
+    tickers = refresh_ticker_master()
+    status = ticker_master_status()
+    return {**status, "symbols": len(tickers)}
+
+
 @router.get("/market/status")
 def market_status() -> dict:
     return {
@@ -165,10 +178,13 @@ def scan(
 
 @router.get("/opportunities/scan")
 def opportunities_scan(
+    universe: str = Query(default="exchange", pattern="^(exchange|discovery|custom)$"),
     symbols: str | None = Query(
         default=None,
-        description="Comma-separated symbols. Defaults to the configured liquid US discovery universe.",
+        description="Comma-separated symbols. Used when universe=custom.",
     ),
+    include_etfs: bool = Query(default=False, alias="includeEtfs"),
+    max_symbols: int = Query(default=250, alias="maxSymbols", ge=1, le=10000),
     provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
     start: date = Query(default=DEFAULT_START),
     end: date = Query(default=DEFAULT_END),
@@ -176,9 +192,9 @@ def opportunities_scan(
     limit: int = Query(default=25, ge=1, le=250),
     api_key: str | None = Query(default=None, alias="apiKey"),
 ) -> dict:
-    universe = _parse_symbols(symbols) if symbols else CONFIG.discovery_universe
+    universe_symbols = _opportunity_universe(universe, symbols, include_etfs, max_symbols)
     opportunities = scan_opportunities(
-        symbols=universe,
+        symbols=universe_symbols,
         provider=provider,
         start=start,
         end=end,
@@ -188,7 +204,8 @@ def opportunities_scan(
         limit=limit,
     )
     return {
-        "universeSize": len(universe),
+        "universe": universe,
+        "universeSize": len(universe_symbols),
         "provider": provider.value,
         "timeframe": timeframe,
         "start": start.isoformat(),
@@ -239,3 +256,16 @@ def journal() -> list[dict]:
 def _parse_symbols(symbols: str) -> list[str]:
     parsed = [symbol.strip().upper() for symbol in symbols.split(",")]
     return [symbol for symbol in parsed if symbol]
+
+
+def _opportunity_universe(
+    universe: str,
+    symbols: str | None,
+    include_etfs: bool,
+    max_symbols: int,
+) -> list[str]:
+    if universe == "custom":
+        return _parse_symbols(symbols or "")
+    if universe == "discovery":
+        return CONFIG.discovery_universe[:max_symbols]
+    return exchange_universe_symbols(include_etfs=include_etfs, max_symbols=max_symbols)

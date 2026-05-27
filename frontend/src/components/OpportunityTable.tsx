@@ -3,6 +3,7 @@ import type { Opportunity } from "../lib/types";
 type Props = {
   opportunities: Opportunity[];
   loading: boolean;
+  universeSize?: number;
   onSelectSymbol: (symbol: string) => void;
 };
 
@@ -12,12 +13,12 @@ function statusClass(status: string) {
   return "pill-wait";
 }
 
-export function OpportunityTable({ opportunities, loading, onSelectSymbol }: Props) {
+export function OpportunityTable({ opportunities, loading, universeSize, onSelectSymbol }: Props) {
   return (
     <section className="panel opportunities-panel" aria-busy={loading}>
       <div className="panel-heading">
         <h2>Opportunities</h2>
-        <span>{loading ? "Scanning" : `${opportunities.length} ranked`}</span>
+        <span>{loading ? "Scanning" : `${opportunities.length} ranked from ${universeSize ?? 0}`}</span>
       </div>
       <div className="table-wrap">
         <table className="opportunity-table">

@@ -38,7 +38,10 @@ def test_portfolio_route_uses_internal_backtest_defaults() -> None:
 
 def test_opportunities_scan_route_returns_ranked_candidates() -> None:
     payload = opportunities_scan(
+        universe="custom",
         symbols="AMD,AAPL,MSFT",
+        include_etfs=False,
+        max_symbols=250,
         provider=MarketDataProviderName.SAMPLE,
         start=DEFAULT_START,
         end=DEFAULT_END,
@@ -54,7 +57,10 @@ def test_opportunities_scan_route_returns_ranked_candidates() -> None:
 
 def test_opportunities_scan_defaults_to_discovery_universe() -> None:
     payload = opportunities_scan(
+        universe="discovery",
         symbols=None,
+        include_etfs=False,
+        max_symbols=250,
         provider=MarketDataProviderName.SAMPLE,
         start=DEFAULT_START,
         end=DEFAULT_END,

@@ -115,7 +115,10 @@ export type Opportunity = {
 };
 
 export type OpportunityScanRequest = {
+  universe?: string;
   symbols?: string;
+  includeEtfs?: boolean;
+  maxSymbols?: number;
   provider: string;
   start: string;
   end: string;
@@ -125,6 +128,7 @@ export type OpportunityScanRequest = {
 };
 
 export type OpportunityScanResult = {
+  universe: string;
   universeSize: number;
   provider: string;
   timeframe: string;

@@ -72,11 +72,13 @@ export default function App() {
   useEffect(() => {
     setScanning(true);
     scanOpportunities({
+      universe: "exchange",
       provider: runRequest.provider,
       start: runRequest.start,
       end: runRequest.end,
       timeframe: runRequest.timeframe,
       limit: 25,
+      maxSymbols: 250,
       apiKey: runRequest.apiKey
     })
       .then(setOpportunityResult)
@@ -232,6 +234,7 @@ export default function App() {
           <OpportunityTable
             loading={scanning}
             opportunities={opportunityResult?.opportunities ?? []}
+            universeSize={opportunityResult?.universeSize}
             onSelectSymbol={selectOpportunity}
           />
           <div className="chart-grid">

@@ -68,7 +68,13 @@ The dashboard supports:
 
 Backtest, candle, signal, and opportunity scan requests accept `provider`, `start`, `end`, `timeframe`, and optional `apiKey`. Backtests also accept `symbol` and `initialCapital`; opportunity scans can optionally accept comma-separated `symbols`, otherwise they use the configured liquid US discovery universe and return the top 25 ranked candidates by default.
 
-The scanner is not yet an exchange-wide NYSE/Nasdaq screener. Scanning every listed ticker will require a ticker master import, persisted candle cache, rate-limit aware refresh jobs, and survivorship-bias controls.
+The scanner can use a cached exchange universe built from Nasdaq Trader symbol directory files:
+
+- `POST /api/universe/refresh` downloads and caches current Nasdaq/NYSE ticker metadata.
+- `GET /api/universe/status` reports cache status, symbol count, and exchange counts.
+- `GET /api/opportunities/scan?universe=exchange&maxSymbols=250&limit=25` scans the cached exchange universe, falling back to the built-in liquid discovery universe until the cache is refreshed.
+
+Full exchange-wide screening still needs persisted historical candle caching and rate-limit aware refresh jobs before it is practical to scan thousands of tickers on every request.
 
 ## Tests
 
@@ -79,10 +85,10 @@ cd backend
 
 ## Next Build Steps
 
-1. Add a persisted ticker master and candle cache for exchange-wide NYSE/Nasdaq screening.
+1. Add persisted historical candle caching and rate-limit aware refresh jobs for exchange-wide scans.
 2. Add multi-symbol portfolio backtesting that allocates capital from ranked opportunities.
 3. Add adaptive exits with trailing stops, partial profits, and momentum continuation checks.
-4. Persist candles, signals, orders, positions, and journal entries in PostgreSQL.
+4. Persist signals, orders, positions, and journal entries in PostgreSQL.
 5. Add WebSocket updates for paper-trading mode.
 6. Expand backtest metrics with drawdown, Sharpe, Sortino, expectancy, and slippage impact.
 7. Add structured agent reasoning logs while keeping trade approval deterministic.
