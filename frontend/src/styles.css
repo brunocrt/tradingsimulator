@@ -151,16 +151,26 @@ select {
 }
 
 .metrics-grid,
+.opportunities-panel,
 .chart-grid,
 .workspace-grid {
-  display: grid;
-  gap: 12px;
   margin: 0 auto;
   max-width: 1440px;
 }
 
+.metrics-grid,
+.chart-grid,
+.workspace-grid {
+  display: grid;
+  gap: 12px;
+}
+
 .metrics-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.opportunities-panel {
   margin-bottom: 12px;
 }
 
@@ -295,6 +305,15 @@ th:last-child {
 .pill-wait {
   background: #eef0f2;
   color: #4d5960;
+}
+
+.pill-watch {
+  background: #fff0c2;
+  color: #775400;
+}
+
+.opportunity-table {
+  min-width: 1120px;
 }
 
 .alert {

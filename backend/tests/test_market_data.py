@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.services.market_data import MarketDataProviderName, MarketDataRequest, fetch_market_data
+from app.services.market_data import MarketDataProviderName, MarketDataRequest, average_volume, fetch_market_data
 
 
 def test_sample_market_data_provider_returns_candles() -> None:
@@ -17,6 +17,7 @@ def test_sample_market_data_provider_returns_candles() -> None:
     assert result.provider == "sample"
     assert result.candles
     assert result.candles[0].symbol == "AMD"
+    assert average_volume(result.candles) > 0
 
 
 def test_polygon_without_key_falls_back_to_sample_with_warning() -> None:
@@ -33,4 +34,3 @@ def test_polygon_without_key_falls_back_to_sample_with_warning() -> None:
     assert result.source == "sample fallback"
     assert result.warning is not None
     assert "API key" in result.warning
-

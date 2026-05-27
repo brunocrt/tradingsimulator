@@ -91,3 +91,44 @@ export type BacktestRequest = {
   timeframe: string;
   apiKey?: string;
 };
+
+export type Opportunity = {
+  rank: number;
+  symbol: string;
+  status: string;
+  opportunity_score: number;
+  momentum_score: number;
+  setup_score: number;
+  liquidity_score: number;
+  best_strategy: string;
+  decision: string;
+  entry_price: number;
+  stop_price: number;
+  target_price: number;
+  risk_reward_ratio: number;
+  return_20d_pct: number;
+  return_50d_pct: number;
+  relative_volume: number;
+  rsi: number;
+  reasons: string[];
+  data_warning: string | null;
+};
+
+export type OpportunityScanRequest = {
+  symbols?: string;
+  provider: string;
+  start: string;
+  end: string;
+  timeframe: string;
+  limit?: number;
+  apiKey?: string;
+};
+
+export type OpportunityScanResult = {
+  universeSize: number;
+  provider: string;
+  timeframe: string;
+  start: string;
+  end: string;
+  opportunities: Opportunity[];
+};

@@ -5,13 +5,77 @@ from fastapi import APIRouter, Query
 
 from app.core.config import SimulatorConfig
 from app.services.backtest import run_single_symbol_backtest
-from app.services.market_data import MarketDataProviderName, MarketDataRequest, fetch_market_data
+from app.services.market_data import MarketDataProviderName, MarketDataRequest, average_volume, fetch_market_data
+from app.services.opportunities import scan_opportunities
 from app.services.orchestrator import scan_symbol
-from app.services.sample_data import generate_intraday_candles, sample_average_volume
 
 router = APIRouter(prefix="/api")
 
 CONFIG = SimulatorConfig()
+
+DEFAULT_SYMBOL = "AMD"
+DEFAULT_START = date(2024, 1, 1)
+DEFAULT_END = date(2024, 6, 30)
+TIMEFRAME_PATTERN = "^(1m|5m|15m|1h|1d)$"
+
+
+def _market_data_request(
+    symbol: str,
+    provider: MarketDataProviderName,
+    start: date,
+    end: date,
+    timeframe: str,
+    api_key: str | None,
+) -> MarketDataRequest:
+    return MarketDataRequest(
+        symbol=symbol.upper(),
+        provider=provider,
+        start=start,
+        end=end,
+        timeframe=timeframe,
+        api_key=api_key,
+    )
+
+
+def _data_source(
+    market_data,
+    symbol: str,
+    timeframe: str,
+    start: date,
+    end: date,
+) -> dict:
+    return {
+        "provider": market_data.provider,
+        "source": market_data.source,
+        "symbol": symbol.upper(),
+        "timeframe": timeframe,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "candles": len(market_data.candles),
+        "warning": market_data.warning,
+    }
+
+
+def _run_backtest(
+    symbol: str,
+    initial_capital: float,
+    provider: MarketDataProviderName,
+    start: date,
+    end: date,
+    timeframe: str,
+    api_key: str | None,
+) -> dict:
+    config = replace(CONFIG, initial_capital=initial_capital)
+    market_data = fetch_market_data(_market_data_request(symbol, provider, start, end, timeframe, api_key))
+    result = run_single_symbol_backtest(
+        market_data.candles,
+        average_volume=average_volume(market_data.candles),
+        spread_pct=0.02,
+        estimated_slippage_pct=0.03,
+        config=config,
+    )
+    result["dataSource"] = _data_source(market_data, symbol, timeframe, start, end)
+    return result
 
 
 @router.get("/config")
@@ -38,32 +102,92 @@ def market_status() -> dict:
         "market": "US_EQUITIES",
         "mode": "simulation",
         "liveTradingEnabled": False,
-        "dataFeed": "sample",
+        "dataFeed": MarketDataProviderName.YAHOO.value,
+        "availableDataFeeds": [provider.value for provider in MarketDataProviderName],
         "status": "DELAYED_OR_SIMULATED",
     }
 
 
 @router.get("/market/candles/{symbol}")
-def candles(symbol: str) -> list[dict]:
-    return [candle.__dict__ for candle in generate_intraday_candles(symbol.upper())]
+def candles(
+    symbol: str,
+    provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
+    start: date = Query(default=DEFAULT_START),
+    end: date = Query(default=DEFAULT_END),
+    timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
+    api_key: str | None = Query(default=None, alias="apiKey"),
+) -> dict:
+    market_data = fetch_market_data(_market_data_request(symbol, provider, start, end, timeframe, api_key))
+    return {
+        "dataSource": _data_source(market_data, symbol, timeframe, start, end),
+        "candles": [candle.__dict__ for candle in market_data.candles],
+    }
 
 
 @router.get("/signals")
-def latest_signals(symbol: str = "AMD") -> list[dict]:
-    candles_for_symbol = generate_intraday_candles(symbol.upper())
+def latest_signals(
+    symbol: str = DEFAULT_SYMBOL,
+    provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
+    start: date = Query(default=DEFAULT_START),
+    end: date = Query(default=DEFAULT_END),
+    timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
+    api_key: str | None = Query(default=None, alias="apiKey"),
+) -> dict:
+    market_data = fetch_market_data(_market_data_request(symbol, provider, start, end, timeframe, api_key))
     signals = scan_symbol(
-        candles_for_symbol,
-        average_volume=sample_average_volume(),
+        market_data.candles,
+        average_volume=average_volume(market_data.candles),
         spread_pct=0.02,
         estimated_slippage_pct=0.03,
         config=CONFIG,
     )
-    return [signal.to_dict() for signal in signals]
+    return {
+        "dataSource": _data_source(market_data, symbol, timeframe, start, end),
+        "signals": [signal.to_dict() for signal in signals],
+    }
 
 
 @router.post("/signals/scan")
-def scan(symbol: str = "AMD") -> dict:
-    return {"signals": latest_signals(symbol)}
+def scan(
+    symbol: str = DEFAULT_SYMBOL,
+    provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
+    start: date = Query(default=DEFAULT_START),
+    end: date = Query(default=DEFAULT_END),
+    timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
+    api_key: str | None = Query(default=None, alias="apiKey"),
+) -> dict:
+    return latest_signals(symbol, provider, start, end, timeframe, api_key)
+
+
+@router.get("/opportunities/scan")
+def opportunities_scan(
+    symbols: str | None = Query(default=None, description="Comma-separated symbols. Defaults to configured watchlist."),
+    provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
+    start: date = Query(default=DEFAULT_START),
+    end: date = Query(default=DEFAULT_END),
+    timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
+    limit: int = Query(default=10, ge=1, le=50),
+    api_key: str | None = Query(default=None, alias="apiKey"),
+) -> dict:
+    universe = _parse_symbols(symbols) if symbols else CONFIG.watchlist
+    opportunities = scan_opportunities(
+        symbols=universe,
+        provider=provider,
+        start=start,
+        end=end,
+        timeframe=timeframe,
+        api_key=api_key,
+        config=CONFIG,
+        limit=limit,
+    )
+    return {
+        "universeSize": len(universe),
+        "provider": provider.value,
+        "timeframe": timeframe,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "opportunities": [opportunity.to_dict() for opportunity in opportunities],
+    }
 
 
 @router.post("/simulation/backtest")
@@ -71,40 +195,12 @@ def backtest(
     symbol: str = "AMD",
     initial_capital: float = Query(default=1000.0, alias="initialCapital", ge=100.0, le=10_000_000.0),
     provider: MarketDataProviderName = Query(default=MarketDataProviderName.YAHOO),
-    start: date = Query(default=date(2024, 1, 1)),
-    end: date = Query(default=date(2024, 6, 30)),
-    timeframe: str = Query(default="1d", pattern="^(1m|5m|15m|1h|1d)$"),
+    start: date = Query(default=DEFAULT_START),
+    end: date = Query(default=DEFAULT_END),
+    timeframe: str = Query(default="1d", pattern=TIMEFRAME_PATTERN),
     api_key: str | None = Query(default=None, alias="apiKey"),
 ) -> dict:
-    config = replace(CONFIG, initial_capital=initial_capital)
-    market_data = fetch_market_data(
-        MarketDataRequest(
-            symbol=symbol.upper(),
-            provider=provider,
-            start=start,
-            end=end,
-            timeframe=timeframe,
-            api_key=api_key,
-        )
-    )
-    result = run_single_symbol_backtest(
-        market_data.candles,
-        average_volume=sample_average_volume(),
-        spread_pct=0.02,
-        estimated_slippage_pct=0.03,
-        config=config,
-    )
-    result["dataSource"] = {
-        "provider": market_data.provider,
-        "source": market_data.source,
-        "symbol": symbol.upper(),
-        "timeframe": timeframe,
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "candles": len(market_data.candles),
-        "warning": market_data.warning,
-    }
-    return result
+    return _run_backtest(symbol, initial_capital, provider, start, end, timeframe, api_key)
 
 
 @router.get("/simulation/status")
@@ -114,14 +210,25 @@ def simulation_status() -> dict:
 
 @router.get("/portfolio")
 def portfolio() -> dict:
-    return backtest()["portfolio"]
+    return _run_backtest(DEFAULT_SYMBOL, 1000.0, MarketDataProviderName.YAHOO, DEFAULT_START, DEFAULT_END, "1d", None)[
+        "portfolio"
+    ]
 
 
 @router.get("/portfolio/performance")
 def performance() -> dict:
-    return backtest()["performance"]
+    return _run_backtest(DEFAULT_SYMBOL, 1000.0, MarketDataProviderName.YAHOO, DEFAULT_START, DEFAULT_END, "1d", None)[
+        "performance"
+    ]
 
 
 @router.get("/trades/journal")
 def journal() -> list[dict]:
-    return backtest()["trades"]
+    return _run_backtest(DEFAULT_SYMBOL, 1000.0, MarketDataProviderName.YAHOO, DEFAULT_START, DEFAULT_END, "1d", None)[
+        "trades"
+    ]
+
+
+def _parse_symbols(symbols: str) -> list[str]:
+    parsed = [symbol.strip().upper() for symbol in symbols.split(",")]
+    return [symbol for symbol in parsed if symbol]

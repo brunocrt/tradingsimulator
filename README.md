@@ -6,6 +6,7 @@ Risk-first stock trading simulation workspace for research, backtesting, and fut
 
 - Deterministic Python simulation core.
 - FastAPI endpoints for config, watchlist, market status, signals, backtest results, portfolio, and trade journal.
+- Ranked opportunity scanner across the configured watchlist.
 - Rule-based MVP strategies:
   - VWAP pullback
   - Opening range breakout
@@ -65,7 +66,7 @@ The dashboard supports:
 - `Polygon`: configurable provider that requires an API key in the UI.
 - `Sample`: generated candles for offline development and demos.
 
-The backtest request accepts `symbol`, `initialCapital`, `provider`, `start`, `end`, `timeframe`, and optional `apiKey`.
+Backtest, candle, signal, and opportunity scan requests accept `provider`, `start`, `end`, `timeframe`, and optional `apiKey`. Backtests also accept `symbol` and `initialCapital`; opportunity scans can optionally accept comma-separated `symbols`.
 
 ## Tests
 
@@ -76,8 +77,9 @@ cd backend
 
 ## Next Build Steps
 
-1. Replace sample candles with a `MarketDataProvider` interface implementation.
-2. Persist candles, signals, orders, positions, and journal entries in PostgreSQL.
-3. Add WebSocket updates for paper-trading mode.
-4. Expand backtest metrics with drawdown, Sharpe, Sortino, expectancy, and slippage impact.
-5. Add structured agent reasoning logs while keeping trade approval deterministic.
+1. Add multi-symbol portfolio backtesting that allocates capital from ranked opportunities.
+2. Add adaptive exits with trailing stops, partial profits, and momentum continuation checks.
+3. Persist candles, signals, orders, positions, and journal entries in PostgreSQL.
+4. Add WebSocket updates for paper-trading mode.
+5. Expand backtest metrics with drawdown, Sharpe, Sortino, expectancy, and slippage impact.
+6. Add structured agent reasoning logs while keeping trade approval deterministic.

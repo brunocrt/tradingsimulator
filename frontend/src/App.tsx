@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { MetricTile } from "./components/MetricTile";
+import { OpportunityTable } from "./components/OpportunityTable";
 import { ScannerTable } from "./components/ScannerTable";
 import { TradeChart } from "./components/TradeChart";
 import { TradeJournal } from "./components/TradeJournal";
-import { runBacktest } from "./lib/api";
+import { runBacktest, scanOpportunities } from "./lib/api";
 import { sampleResult } from "./lib/sampleResult";
-import type { BacktestRequest, BacktestResult } from "./lib/types";
+import type { BacktestRequest, BacktestResult, OpportunityScanResult } from "./lib/types";
 import "./styles.css";
 
 const SYMBOLS = ["AMD", "NVDA", "AAPL", "MSFT", "TSLA", "SPY"];
@@ -46,9 +47,11 @@ export default function App() {
   const [endDate, setEndDate] = useState(DEFAULT_BACKTEST_REQUEST.end);
   const [runRequest, setRunRequest] = useState<BacktestRequest>(DEFAULT_BACKTEST_REQUEST);
   const [result, setResult] = useState<BacktestResult | null>(null);
+  const [opportunityResult, setOpportunityResult] = useState<OpportunityScanResult | null>(null);
   const [selectedTradeIndex, setSelectedTradeIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -66,9 +69,39 @@ export default function App() {
       .finally(() => setLoading(false));
   }, [runRequest]);
 
+  useEffect(() => {
+    setScanning(true);
+    scanOpportunities({
+      provider: runRequest.provider,
+      start: runRequest.start,
+      end: runRequest.end,
+      timeframe: runRequest.timeframe,
+      limit: 10,
+      apiKey: runRequest.apiKey
+    })
+      .then(setOpportunityResult)
+      .catch((err: unknown) => {
+        console.info("Opportunity scan is unavailable.", err);
+      })
+      .finally(() => setScanning(false));
+  }, [runRequest]);
+
   function submitBacktest() {
     setRunRequest({
       symbol,
+      initialCapital,
+      provider,
+      start: startDate,
+      end: endDate,
+      timeframe,
+      apiKey: provider === "polygon" ? apiKey : undefined
+    });
+  }
+
+  function selectOpportunity(symbolToRun: string) {
+    setSymbol(symbolToRun);
+    setRunRequest({
+      symbol: symbolToRun,
       initialCapital,
       provider,
       start: startDate,
@@ -196,6 +229,11 @@ export default function App() {
 
       {result ? (
         <>
+          <OpportunityTable
+            loading={scanning}
+            opportunities={opportunityResult?.opportunities ?? []}
+            onSelectSymbol={selectOpportunity}
+          />
           <div className="chart-grid">
             <TradeChart candles={result.candles} selectedTrade={selectedTrade} trades={result.trades} />
           </div>

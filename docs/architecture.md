@@ -16,13 +16,16 @@ FastAPI exposes the initial REST contract from the specification:
 - `/api/market/candles/{symbol}`
 - `/api/signals`
 - `/api/signals/scan`
+- `/api/opportunities/scan`
 - `/api/simulation/backtest`
 - `/api/simulation/status`
 - `/api/portfolio`
 - `/api/portfolio/performance`
 - `/api/trades/journal`
 
-The API currently uses generated sample candles. The next backend step is to introduce a `MarketDataProvider` interface for historical and delayed market data providers.
+Market data flows through a provider interface with implementations for generated sample candles, Yahoo Finance historical candles, and Polygon aggregates. Backtests, candle reads, and signal scans all use the same provider request path so API behavior stays consistent across research views.
+
+The opportunity scanner runs the configured watchlist through the same deterministic signal engine, adds momentum and liquidity scoring, and returns a ranked shortlist. This separates opportunity discovery from the single-symbol backtest flow and prepares the simulator for portfolio-level allocation.
 
 ## Dashboard
 
@@ -35,4 +38,3 @@ The React dashboard is an operational screen, not a marketing page. It shows acc
 - Position size is derived from equity and configured risk.
 - Backtest P&L includes spread, slippage, and regulatory fee assumptions.
 - Rejected trade reasons are preserved for auditability.
-
